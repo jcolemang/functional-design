@@ -1,0 +1,156 @@
+
+#+TITLE: The Strategy Pattern
+#+AUTHOR: James Coleman Gibson
+
+The strategy pattern is a pattern frequently used in object oriented
+programming in which the programmer may define a set of algorithms which are
+encapsulated, interchangeable, and which may be determined at runtime. This is
+most commonly done by creating an interface which represents the algorithm.
+Users of the software may then implement the interface and drop their
+implementation into the algorithm context, which should continue to compile
+and operate without any code changes.
+
+As an example, consider an application meant to convert between a number of
+data formats. Suppose that Google, Amazon, and Microsoft each had their own
+data format. They each have valuable data that your company, Company X, wants
+to use. Company X also has their own established data format and a significant
+amount of code built on top of it. You need to be able to convert arbitrary
+formats into the Company X format.
+
+Here is an example UML for a theoretical implementation:
+
+[[file:lab1-1-design.png][Example Java UML]]
+
+Fortunately, this implementation translates very well into a language such as
+Haskell. The interface describing an algorithm is describing a function
+mapping a single line of an arbitrary format into the Company X format.
+Because there is only one method in the interface, this can be described
+exactly by the type signature ~parse :: String -> String~, so creating a new
+conversion is as simple as defining a new function.
+
+Of course, this does not mean that the implementations will be identical. It
+would be safe to say that the parsing strategies would be passed in to either
+the constructor of the ~DataStandardizer~ class, or at least passed in via
+separate methods from ~parse~. If we guarantee functional purity, such an
+implementation would be impossible. The ~parse~ function would have to depend
+on data outside of its inputs.
+
+To move to more concrete terms, suppose these were two of the formats:
+
+#+BEGIN_SRC
+google
+geo1 - 10
+geo2 - 20
+geo3 - 500
+
+microsoft
+ms1,50
+ms2,500
+ms3,0
+#+END_SRC
+
+We know that the format will be determined by the first line in the file,
+which will allow us to determine the appropriate parser. We would like to
+alter each line to read ~key:value~. We define a parser type, along with a
+datatype allowing for the possibility for failure.
+
+#+BEGIN_SRC haskell
+-- Types.hs
+data ParseError
+  = NoParser String
+  | EmptyInput
+  | BadParse
+  deriving (Show)
+
+type Parser = String -> Either ParseError String
+#+END_SRC
+
+We also create a ~CompanyParser~ datatype to logically group the data.
+
+#+BEGIN_SRC haskell
+-- Types.hs
+data CompanyParser
+  = CParser String Parser
+#+END_SRC
+
+We can then go on to define the ~parse~ function, which will
+decide between implementations and run the provided parser.
+
+#+BEGIN_SRC haskell
+-- Parser.hs
+nameAndLines :: String -> Either ParseError (String, [String])
+nameAndLines content =
+  let ls = lines content
+  in case ls of
+    [] -> Left EmptyInput
+    name:rest -> return (name, rest)
+
+parse :: [CompanyParser] -> String -> Either ParseError [String]
+parse ps content =
+  let parseMap = fromList $ fmap (\(CParser name p) -> (name, p)) ps
+  in do
+    (name, ls) <- nameAndLines content
+    case Data.Map.lookup name parseMap of
+      Just p ->
+        mapM p ls
+      Nothing ->
+        Left $ NoParser name
+#+END_SRC
+
+Here we take a list of ~CompanyParser~'s as well as the data input. We use a
+helper function to split the input into the header and the data which needs to
+be parsed. A map is used to lookup the parser, and then run the parser on each
+of the input lines. This is identical to the equivalent Java program.
+
+Finally, we define an actual parser.
+
+#+BEGIN_SRC haskell
+-- CompanyParsers.hs
+import Text.ParserCombinators.Parsec
+
+toCompanyX :: (String, String) -> String
+toCompanyX (l, r) =
+  l ++ ":" ++ r
+
+microsoftParser :: Types.Parser
+microsoftParser s =
+  let p = do
+        k <- string "ms"
+        num <- many1 digit
+        void $ string ","
+        v <- many1 digit
+        return (k++num, v)
+  in case parse p "" s of
+    Right x ->
+      Right $ toCompanyX x
+    Left _ ->
+      Left BadParse
+
+microsoft :: CompanyParser
+microsoft = CParser "microsoft" microsoftParser
+#+END_SRC
+
+True to the promises of the design pattern, this function's implementation
+could change entirely. Consider, for example, if there was a strong guarantee
+that there could never be over ten lines in an input file. In this case, using
+a library like =Parsec= is entirely overkill, and a more basic method would
+suffice. As an example, the following code would also work:
+
+#+BEGIN_SRC haskell
+-- CompanyParsers.hs
+microsoftParser :: Types.Parser
+microsoftParser s =
+  Right $ toCompanyX (take 3 s, drop 4 s)
+
+microsoft :: CompanyParser
+microsoft = CParser "microsoft" microsoftParser
+#+END_SRC
+
+On a whole, this represents an implementation nearly identical to the most
+likely equivalent Java implementation. There is still a map lookup of the
+parsers, the parser implementation is still decided at runtime, and the type
+signatures still provide a similar level of functionality as the Java interface.
+In this case, a the gang of four design pattern translates almost exactly from
+an object oriented language to a functional one. Although there are no
+interfaces defined, and hence much less overhead in the implementation, the
+encapsulation of an algorithm and runtime decision is still very much present.

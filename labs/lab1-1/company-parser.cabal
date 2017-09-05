@@ -1,0 +1,18 @@
+name:                company-parser
+version:             0.1.0.0
+author:              James Coleman Gibson
+category:            Web
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+executable company-parser
+  hs-source-dirs:      src/
+  main-is:             Main.hs
+  build-depends:       base >= 4.7 && < 5
+                     , containers
+                     , parsec
+  default-language:    Haskell2010
+  other-modules:       CompanyParsers
+                     , Types
+                     , Parser

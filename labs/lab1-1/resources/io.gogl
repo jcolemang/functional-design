@@ -1,0 +1,4 @@
+amazon
+aws1 ttl 100, aws2 ttl 450
+aws3 ttl 90, aws4 ttl 750
+aws ttl 900, aws6 ttl 200
