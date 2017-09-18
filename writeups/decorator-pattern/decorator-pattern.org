@@ -1,0 +1,144 @@
+
+#+TITLE: The Decorator Pattern
+#+AUTHOR: James Coleman Gibson and Sabrina Wicker
+
+In OOP, the decorator pattern is used to attach additional responsibilities
+to objects dynamically. Using "decorators" greatly increases the flexibility
+of a design, especially when your model calls for lots of modifications to
+existing objects or adding new things to the model. The decorator pattern
+adheres quite well to the design principle of "code should be open for
+extension, but closed for modification." This is the Open-Closed principle.
+
+Consider a setup that emulates a basic cafe. This cafe has basic drinks like
+a house blend, a dark roast, decaf, and espresso. You can also add to your
+drink. Let's say the cafe offers milk, soy, mocha, and whip. Your drink can
+have one base, but any number of additions. For example, you can have a
+decaf drink with milk, mocha, and double whip.
+
+As you can guess, the number of drink combinations you can create is too
+daunting for a programmer to represent one by one. And what if the cafe
+adds a new base drink, or a new drink addition? The numbers just keep
+growing! How can we design a system that lets you create any number
+of drinks from existing options, and has room for new drinks options?
+
+Lastly, each drink has a cost and a description, built from the sums
+of a drink's component costs and descriptions. XX fill out more
+
+
+Here is an example UML for a theoretical implementation:
+
+[[file:lab1-1-design.png][Example Java UML]]
+
+This sample design translates well enough from object-oriented to functional.
+Note the "well enough." There are some drawbacks that we shall discuss soon...
+We can use custom types to represent the various drink objects as well as a
+structure for representing combinations of drink objects. Adding a new
+core drink or drink addition is as simple as making a new instance
+of the type. To get the cost or description of a complicated drink like
+"Espresso with milk and double mocha and soy," we use a recursive function.
+
+HOWEVER... Because the new drinks and drink additions are instances of
+a type, and not their own types, we aren't able to distinguish between
+different drinks/additions just by looking at their type. We have to
+check their description. Relying on strings is never a good idea when
+you have something as great as type safety, but sadly, in this approach
+our hand is forced.
+
+Here we have two implementations, one written in Haskell and the other
+written in F#. The two languages have similar syntax, but the
+implementations will have subtle differences.
+
+#+BEGIN_SRC f#
+-- Beverages.fsi
+type BasicBeverage = {
+    cost: float
+    description: string
+}
+
+type BeverageAddition = {
+    cost: float
+    description: string
+}
+
+type CafeBeverage =
+| BasicBeverage of BasicBeverage
+| FancierBeverage of BeverageAddition * CafeBeverage
+
+type Parser = String -> Either ParseError String
+#+END_SRC
+
+Note that while the BasicBeverage type and the BeverageAddition type
+hold the same data, we keep them separated. If they were the same,
+then someone could create a drink that was, say, pure soy, or milk
+with whip. While there's probably some cafe out there that would
+let you order such a thing, for our purposes, any drink MUST have
+a BasicBeverage at its root.
+
+CafeBeverage is a recursive type, and this is what allows for
+decorating. Imagine a tree that can't branch. A stick, if you will.
+It can only extendin one direction until it terminates. You can
+have a drink with as many BeverageAdditions as you want, but you
+must include a BasicBeverage to make it complete.
+
+Let's create a BasicBeverage and some BeverageAdditions. Because
+BasicBeverage and BeverageAdditions are types, we can create as
+many as we want.
+
+#+BEGIN_SRC f#
+-- Beverages.fsi
+let houseblend = BasicBeverage {cost=10.0; description="House blend"}
+let milk : BeverageAddition = {cost=20.0; description="milk"}
+let mocha: BeverageAddition = {cost = 5.00; description="mocha"}
+#+END_SRC
+
+Now let's make some drinks! We want a house blend with milk, and
+a house blend with milk and mocha. Instead of making a new drink,
+we'll decorate(!) the houseblend/milk combo to include mocha.
+
+#+BEGIN_SRC f#
+-- Beverages.fsi
+let houseblendWithMilk : CafeBeverage = FancierBeverage (milk, houseblend)
+let houseblendWithMilkAndMocha: CafeBeverage = FancierBeverage (mocha, houseblendWithMilk)
+
+#+END_SRC
+
+Okay, great! But how do we calculate the costs? And get the description?
+
+#+BEGIN_SRC f#
+-- Beverages.fsi
+let rec getCost (bev: CafeBeverage) =
+    match bev with
+    | BasicBeverage b -> b.cost
+    | FancierBeverage (a,b) -> a.cost + getCost b
+
+let rec getDescription (bev: CafeBeverage) =
+    match bev with
+    | BasicBeverage b -> b.description
+    | FancierBeverage (a,b) -> a.description + " and " + getDescription b
+
+getCost houseblendWithMilk
+getDescription houseblendWithMilk
+
+getCost houseblendWithMilkAndMocha
+getDescription houseblendWithMilkAndMocha
+
+#+END_SRC
+
+How simple and nice. This way, cost and description calculations are
+completely independent from any implementation of a drink.
+
+
+In the end, this implementation is fair enough, but doesn't take advantage
+of a strongly typed system. We have to peer inside instances of types
+to differentiate drinks and drink additions. XX
+
+One thing to note about the Decorator pattern and functional programming--
+When decorating a function to give it additional functionality,
+function composition is the way to go. In functional languages this is
+extremely simple. You can take an old function, make a new function that
+takes the old function's output and tweaks it as desired and returns
+the new result, then compose the two together and get a single
+function that takes the same input as the old function, but returns
+the new result.
+
+XX Sometimes the object oriented approach is the way to go.
