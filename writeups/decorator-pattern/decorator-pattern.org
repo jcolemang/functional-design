@@ -5,9 +5,9 @@
 In OOP, the decorator pattern is used to attach additional responsibilities
 to objects dynamically. Using "decorators" greatly increases the flexibility
 of a design, especially when your model calls for lots of modifications to
-existing objects or adding new things to the model. The decorator pattern
+existing objects or adding new objects to the model. The decorator pattern
 adheres quite well to the design principle of "code should be open for
-extension, but closed for modification." This is the Open-Closed principle.
+extension, but closed for modification," known as the Open-Closed principle.
 
 Consider a setup that emulates a basic cafe. This cafe has basic drinks like
 a house blend, a dark roast, decaf, and espresso. You can also add to your
@@ -26,12 +26,14 @@ of a drink's component costs and descriptions. XX fill out more
 
 
 Here is an example UML for a theoretical implementation:
+XX make/get UML
 
 [[file:lab1-1-design.png][Example Java UML]]
 
 This sample design translates well enough from object-oriented to functional.
 Note the "well enough." There are some drawbacks that we shall discuss soon...
-We can use custom types to represent the various drink objects as well as a
+
+We can use custom types to represent the different drink objects as well as a
 structure for representing combinations of drink objects. Adding a new
 core drink or drink addition is as simple as making a new instance
 of the type. To get the cost or description of a complicated drink like
@@ -71,12 +73,12 @@ Note that while the BasicBeverage type and the BeverageAddition type
 hold the same data, we keep them separated. If they were the same,
 then someone could create a drink that was, say, pure soy, or milk
 with whip. While there's probably some cafe out there that would
-let you order such a thing, for our purposes, any drink MUST have
+let you to order those things, for our purposes, any drink MUST have
 a BasicBeverage at its root.
 
 CafeBeverage is a recursive type, and this is what allows for
 decorating. Imagine a tree that can't branch. A stick, if you will.
-It can only extendin one direction until it terminates. You can
+It can only extend in one direction until it terminates. You can
 have a drink with as many BeverageAdditions as you want, but you
 must include a BasicBeverage to make it complete.
 
@@ -142,3 +144,4 @@ function that takes the same input as the old function, but returns
 the new result.
 
 XX Sometimes the object oriented approach is the way to go.
+XX Combinator stuff
