@@ -1,0 +1,108 @@
+#+TITLE: The Strategy Pattern
+#+AUTHOR: Sabrina Wicker
+
+The template pattern is used to encapsulate algorithms and
+break them into orderly steps. The template can define the
+implementation of some or all of those steps, and subclasses
+fill in the rest according to their specialized needs. This
+can be rephrased as: We want to standardize behaviors and
+define specific ways those behaviors must occur. We want
+Task A to happen in a specific way, Task B to happen in
+a specific way, Task C be customized, and we always want
+to run Task A before Task B, and Task C last.
+
+In functional programming, we can use types and type signatures
+to define the behavior of functions. In F# we can declare a type
+signature as follows:
+
+type n = (int -> int) -> string -> string
+
+Any implementation of this type must adhere to the signature. That
+is, it must take two parameters: [a function that takes an int and
+returns an int] and a string, and return a string. We can also
+throw more types in there to make things even more specific.
+
+#+BEGIN_SRC fsharp
+-- pasta.hs
+//boil water
+//cook noodles
+//add garnishes
+//serve
+
+let pastaDinner (customCookNoodles: unit -> unit) (addCustomGarnishes: unit -> unit) =
+    let boilWater() =
+        printfn "Boiling water!"
+
+    let serve() =
+        printfn "Dinner is served!"
+        
+    boilWater()
+    customCookNoodles()
+    addCustomGarnishes()
+    serve()
+
+//Start of custom functions for Ramen and Spaghetti
+
+let cookRamen() =
+    printfn "Adding noodles"
+    printfn "Adding veggies"
+    printfn "Waiting 5 minutes"
+
+let cookSpag() =
+    printfn "Adding oil to water"
+    printfn "Adding spaghetti"
+    printfn "Waiting 8 minutes"
+
+let addRamenGarnish() =
+    printfn "Adding pork"
+    printfn "Adding green onion"
+    printfn "Adding radish"
+
+let addSpagGarnish() =
+    printfn "Adding spaghetti sauce"
+    printfn "Adding loads of parmesan cheese"
+let ramenDinner = pastaDinner cookRamen addRamenGarnish
+let spagDinner = pastaDinner cookSpag addSpagGarnish
+#+END_SRC
+
+Here we create a template function that consists of four function calls.
+The first and last functions are identical for every implementation. 
+Every pasta dinner needs water to be boiled to cook the noodles, and 
+every pasta dinner should be served. However, the middle two functions 
+vary from pasta to pasta.
+
+Luckily, we're able to pass functions around as if they were objects! 
+So we simply pass the two custom functions in to account for variations 
+in our pasta dinners. Now we have customizable, but structured 
+functionality.
+
+Note that the parameters in pastaDinner have their types listed as
+unit -> unit functions. This ensures that any function you want to 
+pass in doesn't return anything that might make the compiler 
+complain. In a more involved implementation, you'll probably have 
+custom types and type signatures for your template method sub-steps.
+
+You can also chain substeps together if the output of one step is the 
+input to another. The forward pipe operator |> makes this simple. 
+For example...
+
+#+BEGIN_SRC fsharp
+let mysteryOperations (startingNum: int) (customOp: (int -> int)) =
+    let addFour() = startingNum + 4
+    let multiplyByNegativeThree n = n * 3
+    let doCustomOp = customOp
+    let minusOne n = n - 1
+
+    let result = addFour()
+                |> multiplyByNegativeThree
+                |> doCustomOp
+                |> minusOne
+
+    printfn "Result: %i" result
+
+mysteryOperations 0 (fun n -> n % 5) //Result: 1
+#+END_SRC
+
+A functional implementation of the template pattern is fairly
+straightforward. Think of it as replacing subclasses with
+functions-as-objects.
