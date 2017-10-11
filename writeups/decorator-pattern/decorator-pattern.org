@@ -50,7 +50,7 @@ Here we have two implementations, one written in Haskell and the other
 written in F#. The two languages have similar syntax, but the
 implementations will have subtle differences.
 
-#+BEGIN_SRC f#
+#+BEGIN_SRC fsharp
 -- Beverages.fsi
 type BasicBeverage = {
     cost: float
@@ -86,7 +86,7 @@ Let's create a BasicBeverage and some BeverageAdditions. Because
 BasicBeverage and BeverageAdditions are types, we can create as
 many as we want.
 
-#+BEGIN_SRC f#
+#+BEGIN_SRC fsharp
 -- Beverages.fsi
 let houseblend = BasicBeverage {cost=10.0; description="House blend"}
 let milk : BeverageAddition = {cost=20.0; description="milk"}
@@ -97,7 +97,7 @@ Now let's make some drinks! We want a house blend with milk, and
 a house blend with milk and mocha. Instead of making a new drink,
 we'll decorate(!) the houseblend/milk combo to include mocha.
 
-#+BEGIN_SRC f#
+#+BEGIN_SRC fsharp
 -- Beverages.fsi
 let houseblendWithMilk : CafeBeverage = FancierBeverage (milk, houseblend)
 let houseblendWithMilkAndMocha: CafeBeverage = FancierBeverage (mocha, houseblendWithMilk)
@@ -106,7 +106,7 @@ let houseblendWithMilkAndMocha: CafeBeverage = FancierBeverage (mocha, houseblen
 
 Okay, great! But how do we calculate the costs? And get the description?
 
-#+BEGIN_SRC f#
+#+BEGIN_SRC fsharp
 -- Beverages.fsi
 let rec getCost (bev: CafeBeverage) =
     match bev with
